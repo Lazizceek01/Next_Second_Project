@@ -24,57 +24,54 @@
 // }
 
 
-
 import { NextResponse } from "next/server";
-import { Product, products } from './lib/data'
+import { Product, products } from './lib/data';
 
-export function GET(){
-  return NextResponse.json(products)
+export function GET() {
+  return NextResponse.json(products);
 }
 
-export async function POST(req: Request){
-  try{
-    const {title, price} = await req.json();
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
 
-    // 1. Validatsiya: Ma'lumotlar to'liq kelganini tekshiramiz
-    if (!title || !price) {
+    if (!body || !body.title || !body.price) {
       return NextResponse.json(
-        { message: "Nomi (title) va narxi (price) majburiy!" }, 
+        { message: "Nomi (title) va narxi (price) yuborilishi shart!" },
         { status: 400 }
       );
     }
 
-    // 2. Dublikatni tekshirish: Massivda shunday nomli mahsulot bor-yo'qligini qidiramiz
-    // .toLowerCase() qilsak, "Apple" va "apple" ni ham bir xil deb hisoblaydi
+    const { title, price } = body;
     const isExist = products.some(
-      (p) => p.title.toLowerCase() === title.trim().toLowerCase()
+      (p) => p?.title?.toLowerCase() === title?.trim()?.toLowerCase()
     );
 
     if (isExist) {
       return NextResponse.json(
-        { message: "Bunday mahsulot allaqachon mavjud! Qayta qo'shish mumkin emas." }, 
-        { status: 400 } // 400 Bad Request - noto'g'ri so'rov
+        { message: "Bunday mahsulot allaqachon mavjud!" },
+        { status: 400 }
       );
     }
 
-    // 3. Agar mavjud bo'lmasa, yangi mahsulotni yaratamiz va qo'shamiz
     const newProduct: Product = {
       id: products.length + 1,
-      title: title.trim(), // Ortiqcha bo'shliqlarni olib tashlaymiz
-      price
+      title: title.trim(),
+      price: Number(price)
     };
 
     products.push(newProduct);
 
     return NextResponse.json({
-      message: "New Product Added Successfully", 
+      message: "New Product Added Successfully",
       product: newProduct
-    }, { status: 201 }); // 201 - Muvaffaqiyatli yaratildi
+    }, { status: 201 });
 
-  } catch(error){
-    console.log(error);
+  } catch (error) {
+    console.error("POST Xatolik:", error); 
+    
     return NextResponse.json(
-      { message: "Internal Server Error" }, 
+      { message: "Internal Server Error" },
       { status: 500 }
     );
   }
